@@ -1,37 +1,51 @@
-# Skycoin Tools
+# SKYCOIN4444 Crypto Envelope
 
-Developer tooling and utility component for the SKYCOIN4444 ecosystem.
+A small TypeScript utility for AES-256-GCM authenticated encryption envelopes. It is a reusable engineering component, not a key-management system, secrets vault, password manager, compliance certification, or claim of “military-grade” security.
 
-## Current repository evidence
+## Implemented behavior
 
-- Public TypeScript repository on `main`.
-- 27 tracked files were observed in the current audit snapshot.
-- `package.json`, Docker configuration, Docker Compose configuration, and GitHub Actions configuration are present.
-- No test file was identified by the current filename-based audit.
+- generates cryptographically random 32-byte AES keys
+- encrypts UTF-8 plaintext with AES-256-GCM
+- uses a fresh 12-byte nonce/IV for each encryption
+- returns an explicit versioned envelope containing algorithm, IV, ciphertext, and authentication tag
+- validates key length and hex envelope fields
+- rejects unsupported envelope versions/algorithms
+- authenticated decryption rejects modified ciphertext or tags
+- retains the historical `MilitaryGradeEncryption` class only as a deprecated compatibility alias
 
-## Ecosystem role
+```ts
+import { AesGcmEnvelope } from "@skycoin4444/crypto-envelope";
 
-**Core Platform → Developer Tools / Utilities**
+const crypto = new AesGcmEnvelope();
+const key = crypto.generateKey();
+const envelope = crypto.encrypt("example", key);
+const plaintext = crypto.decrypt(envelope, key);
+```
 
-This repository is a candidate source for reusable developer tooling and operational utilities. It should be integrated into the canonical platform only where its actual interfaces and behavior provide value.
+## Verification
 
-## Truthful status
+```bash
+npm install
+npm run lint
+npm test
+npm run build
+npm audit --audit-level=high
+```
 
-- Implementation: **present**
-- Canonical integration: **pending comparison with existing tooling**
-- Automated tests: **not established by current repository evidence**
-- Production deployment: **not verified**
+CI runs typecheck, tests, library build, and dependency audit on main, product branches, and pull requests. Tests cover round trips, key validation, malformed envelopes, and ciphertext tampering.
 
-The existing `package.json` contains placeholder success commands and a build command that suppresses TypeScript failures. Those commands are not evidence that tests, linting, or builds pass and should be replaced with real validation before production promotion.
+## Security boundaries
 
-## Consolidation approach
+The caller owns key generation policy, key storage, rotation, access control, backup, secure deletion, and transport. Never store encryption keys beside ciphertext. Do not reuse a fixed IV with the same key. Do not treat this utility as a replacement for a managed KMS/HSM or a reviewed secrets-management platform.
 
-Preserve existing source and configuration. Compare this capability against tooling already present elsewhere in the SKYCOIN4444 portfolio before adding dependencies or creating another service. If a missing capability requires mature public open-source infrastructure, evaluate established projects and license compatibility first, then adapt only what is needed.
+No independent cryptographic/security audit has been performed. Production use requires threat modeling and review appropriate to the data being protected.
 
-## Production requirements
+## Product scope
 
-Establish real tests, strict build/type validation, documented interfaces, dependency checks, and reproducible CI before declaring this component production-ready.
+The repository previously contained generic AI/security-agent placeholders and scripts that always reported success. The active package build is intentionally scoped only to the authenticated-encryption utility; unrelated historical source remains preserved in Git history but is not part of this package artifact.
+
+**Classification:** ENGINEERING LAB / beta library.
 
 ## License
 
-MIT, subject to the checked-in license and applicable third-party dependency licenses.
+MIT; see `LICENSE`.
